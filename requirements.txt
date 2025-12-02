@@ -1,0 +1,7 @@
+streamlit==1.39.0
+
+matplotlib==3.9.2
+
+numpy==2.1.2
+
+fpdf2==2.8.1
