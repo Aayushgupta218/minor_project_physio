@@ -29,7 +29,7 @@ def create_sample_graphs():
     # 2. Knee joint angles chart
     fig2, ax2 = plt.subplots()
     ax2.plot(x, y2, label="Right Knee")
-    ax2.plot(x, y2-20, label="Left Knee")
+    ax2.plot(x, y2 - 20, label="Left Knee")
     ax2.set_xlabel("Frames")
     ax2.set_ylabel("Angle (deg)")
     ax2.set_title("Knee Joint Angles")
@@ -42,7 +42,7 @@ def create_sample_graphs():
     # 3. Hip joint angles chart
     fig3, ax3 = plt.subplots()
     ax3.plot(x, y3, label="Right Hip")
-    ax3.plot(x, y3-10, label="Left Hip")
+    ax3.plot(x, y3 - 10, label="Left Hip")
     ax3.set_xlabel("Frames")
     ax3.set_ylabel("Angle (deg)")
     ax3.set_title("Hip Joint Angles")
@@ -54,42 +54,66 @@ def create_sample_graphs():
 
     return temp_files
 
+# ------------ PDF Generation ------------
+
 def generate_pdf(patient_id, session_notes, image_paths):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 12, "Physiotherapy Exercise Report", ln=1, align="C")
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 8, f"Patient ID: {patient_id}", ln=1)
-    pdf.cell(0, 8, f"Session Notes: {session_notes}", ln=1)
-    pdf.ln(4)
 
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 6, "Summary:", ln=1)
-    pdf.set_font("Arial", '', 11)
-    pdf.multi_cell(0, 6, "Sample analysis results: Patient performed squats/lunges. "
-                         "Knee/hip joint angles tracked, with vertical displacement showing good form. "
-                         "Consistency between frames was within optimal clinical range. "
-                         "No abnormal gait detected. (This is sample data)")
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 12, "Physiotherapy Exercise Report", align="C")
+    pdf.ln(12)
+
+    pdf.set_font("Helvetica", "", 12)
+    pdf.cell(0, 8, f"Patient ID: {patient_id}")
+    pdf.ln(8)
+    pdf.cell(0, 8, f"Session Notes: {session_notes}")
+    pdf.ln(10)
+
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 6, "Summary:")
+    pdf.ln(8)
+
+    pdf.set_font("Helvetica", "", 11)
+    pdf.multi_cell(
+        0,
+        6,
+        "Sample analysis results: Patient performed squats/lunges. "
+        "Knee/hip joint angles tracked, with vertical displacement showing good form. "
+        "Consistency between frames was within optimal clinical range. "
+        "No abnormal gait detected. (This is sample data)."
+    )
 
     for img_path in image_paths:
         pdf.ln(8)
         pdf.image(img_path, w=160)
         pdf.ln(2)
 
-    pdf.set_font("Arial", 'I', 10)
-    pdf.cell(0, 10, "Report generated: Streamlit Demo", ln=1, align="R")
+    pdf.set_font("Helvetica", "I", 10)
+    pdf.ln(6)
+    pdf.cell(0, 10, "Report generated: Streamlit Demo")
 
-    # Use dest='S' to get bytes instead of writing to file
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    # Get PDF bytes in a way compatible with both FPDF and fpdf2
+    pdf_raw = pdf.output()
+
+    if isinstance(pdf_raw, (bytes, bytearray)):
+        pdf_bytes = bytes(pdf_raw)
+    else:
+        pdf_bytes = pdf_raw.encode("latin-1")
+
     pdf_output = BytesIO(pdf_bytes)
 
     # Cleanup temp files
     for f in image_paths:
-        os.remove(f)
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+
     return pdf_output
 
-# ---- Streamlit UI ----
+# ------------ Streamlit UI ------------
+
 st.set_page_config(page_title="Physiotherapy Angle Detection", layout="wide")
 st.title("Automated Physiotherapy Pose & Angle Analysis Platform")
 
@@ -99,7 +123,10 @@ with st.sidebar:
     session_notes = st.text_area("Session Notes (optional)")
 
 st.header("1. Upload Exercise Video")
-uploaded_file = st.file_uploader("Upload your exercise video (MP4/AVI)", type=['mp4', 'avi'])
+uploaded_file = st.file_uploader(
+    "Upload your exercise video (MP4/AVI)",
+    type=["mp4", "avi"],
+)
 
 if uploaded_file:
     st.video(uploaded_file)
@@ -114,7 +141,6 @@ if uploaded_file:
                 file_name=f"{patient_id}_physio_report.pdf" if patient_id else "physio_report.pdf",
                 mime="application/pdf",
             )
-
 
 
 # import streamlit as st
